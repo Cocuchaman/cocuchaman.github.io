@@ -1,4 +1,4 @@
-<html class="scroll-smooth" lang="es">
+<html class="scroll" lang="es">
 
 <head>
 
@@ -2048,6 +2048,402 @@
 </head>
 
 <body class="antialiased">
+    <!-- INTRO SEQUENCE OVERLAY -->
+    <div id="intro-overlay"
+        style="position: fixed; inset: 0; z-index: 99999; background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; font-family: 'Courier New', monospace;">
+        <style>
+            #intro-overlay .fade-text {
+                animation: fadeInOut 2s forwards;
+                font-family: 'Courier New', monospace;
+                /* Fallback */
+                font-size: 4vw;
+                /* Responsive size */
+                font-weight: bold;
+                letter-spacing: 0.2em;
+                opacity: 0;
+                text-align: center;
+                text-transform: uppercase;
+                color: #fff;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            }
+
+            @keyframes fadeInOut {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.95);
+                    filter: blur(10px);
+                }
+
+                20% {
+                    opacity: 1;
+                    transform: scale(1);
+                    filter: blur(0px);
+                }
+
+                80% {
+                    opacity: 1;
+                    transform: scale(1);
+                    filter: blur(0px);
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: scale(1.05);
+                    filter: blur(5px);
+                }
+            }
+
+            #intro-vision-container {
+                display: none;
+                opacity: 0;
+                transition: opacity 2s;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+                height: 100%;
+                justify-content: center;
+            }
+
+            .vision-frame {
+                position: relative;
+                width: min(80vw, 800px);
+                aspect-ratio: 16/9;
+                /* Maintain cinematic aspect */
+                border: 1px solid #333;
+                background: #000;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            }
+
+            .vision-img-content {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                /* Fill the frame */
+                opacity: 0;
+                transition: opacity 2s ease-in-out;
+            }
+
+            .noise-canvas {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                opacity: 1;
+                transition: opacity 2s ease-in-out;
+                z-index: 5;
+            }
+
+            .rec-indicator {
+                position: absolute;
+                top: 5%;
+                right: 5%;
+                color: #ff0000;
+                font-size: clamp(1rem, 2vw, 1.5rem);
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                text-shadow: 0 0 10px #ff0000;
+                z-index: 10;
+                font-family: monospace;
+            }
+
+            .rec-dot {
+                width: 12px;
+                height: 12px;
+                background: #ff0000;
+                border-radius: 50%;
+                animation: blink 1s infinite;
+            }
+
+            @keyframes blink {
+                50% {
+                    opacity: 0;
+                }
+            }
+
+            .intro-cta {
+                position: relative;
+                margin-top: 3rem;
+                text-align: center;
+                opacity: 0;
+                transform: translateY(20px);
+                transition: all 0.3s ease 0.3s;
+                /* delay appearance */
+                z-index: 20;
+                padding: 0 20px;
+            }
+
+            .intro-cta.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .intro-btn {
+                margin-top: 2rem;
+                background: transparent;
+                border: 1px solid #00ff9d;
+                color: #00ff9d;
+                padding: 1rem 3rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                letter-spacing: 3px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                text-transform: uppercase;
+                font-family: 'Courier New', monospace;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .intro-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 100%;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 255, 157, 0.2);
+                transition: opacity 0.3s;
+
+            }
+
+            .intro-btn:hover::before {
+
+                opacity: 1;
+            }
+
+            .intro-btn:hover {
+                box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+                text-shadow: 0 0 10px rgba(0, 255, 157, 0.8);
+            }
+        </style>
+
+        <h1 id="intro-title" class="fade-text" style="font-family: Space Grotesk, sans-serif;">UNA VISITA, UNA VISIÓN
+        </h1>
+
+        <div id="intro-vision-container">
+            <div class="vision-frame">
+                <div class="rec-indicator">
+                    <div class="rec-dot"></div> REC
+                </div>
+                <img id="intro-vision-img" class="vision-img-content" src="" alt="Visión Generada">
+                <canvas id="intro-noise" class="noise-canvas"></canvas>
+            </div>
+            <div class="intro-cta" id="intro-cta">
+                <p
+                    style="font-size: clamp(1rem, 1.5vw, 1.2rem); margin-bottom: 20px; color: #a0a0a0; max-width: 700px; line-height: 1.6;">
+                    Con cada visita, se genera una nueva visión de la IA.<br>
+                    Podrás encontrarla luego, en NUEVAS VISIONES.
+                </p>
+                <button class="intro-btn" onclick="finishIntro()">ENTRAR AL ESPACIO LATENTE</button>
+            </div>
+        </div>
+
+        <script>
+                (function () {
+                    // === CONFIGURATION ===
+                    // LISTA DE IMAGENES: El sistema elegirá una al azar.
+                    // Si subes más imágenes a la carpeta 'visiones-intro', agrégalas aquí.
+                    const visionImages = [
+                        'visiones-intro/vision-1.png',
+                        'visiones-intro/vision-2.png',
+                        'visiones-intro/vision-3.png',
+                        'visiones-intro/vision-4.png',
+                        'visiones-intro/vision-5.png',
+                        'visiones-intro/vision-6.png',
+                        'visiones-intro/vision-7.png',
+                        'visiones-intro/vision-8.png',
+                        'visiones-intro/vision-9.png',
+                        'visiones-intro/vision-10.png',
+                        'visiones-intro/vision-11.png',
+                        'visiones-intro/vision-12.png',
+                        'visiones-intro/vision-13.png',
+                        'visiones-intro/vision-14.png',
+                        'visiones-intro/vision-15.png',
+                        'visiones-intro/vision-16.png',
+                        'visiones-intro/vision-17.png',
+                        'visiones-intro/vision-18.png',
+                        'visiones-intro/vision-19.png',
+                        'visiones-intro/vision-20.png',
+                        'visiones-intro/vision-21.png',
+                        'visiones-intro/vision-22.png',
+                        'visiones-intro/vision-23.png',
+                        'visiones-intro/vision-24.png',
+                        'visiones-intro/vision-25.png',
+                        'visiones-intro/vision-26.png',
+                        'visiones-intro/vision-27.png',
+                        'visiones-intro/vision-28.png',
+                        'visiones-intro/vision-29.png',
+                        'visiones-intro/vision-30.png',
+                        'visiones-intro/vision-31.png',
+                        'visiones-intro/vision-32.png',
+                        'visiones-intro/vision-33.png',
+                        'visiones-intro/vision-34.png',
+                        'visiones-intro/vision-35.png',
+                        'visiones-intro/vision-36.png',
+                        'visiones-intro/vision-37.png',
+                        'visiones-intro/vision-38.png',
+                        'visiones-intro/vision-39.png',
+                        'visiones-intro/vision-40.png',
+                        'visiones-intro/vision-41.png',
+                        'visiones-intro/vision-42.png',
+                        'visiones-intro/vision-43.png',
+                        'visiones-intro/vision-44.png',
+                        'visiones-intro/vision-45.png',
+                        'visiones-intro/vision-46.png',
+                        'visiones-intro/vision-47.png',
+                        'visiones-intro/vision-48.png',
+                        'visiones-intro/vision-49.png',
+                        'visiones-intro/vision-50.png',
+                        'visiones-intro/vision-51.png',
+                        'visiones-intro/vision-52.png',
+                        'visiones-intro/vision-53.png',
+                        'visiones-intro/vision-54.png'
+                    ];
+
+                    const overlay = document.getElementById('intro-overlay');
+                    const title = document.getElementById('intro-title');
+                    const container = document.getElementById('intro-vision-container');
+                    const imgEl = document.getElementById('intro-vision-img');
+                    const noiseCanvas = document.getElementById('intro-noise');
+                    const cta = document.getElementById('intro-cta');
+
+                    // Random Image Selection
+                    const randomImage = visionImages[Math.floor(Math.random() * visionImages.length)];
+                    imgEl.src = randomImage;
+
+                    // Noise Animation
+                    const ctx = noiseCanvas.getContext('2d');
+                    let noiseAnimId;
+
+                    function resizeCanvas() {
+                        if (!noiseCanvas.parentElement) return;
+                        noiseCanvas.width = noiseCanvas.parentElement.offsetWidth / 2; // Low res for granular noise
+                        noiseCanvas.height = noiseCanvas.parentElement.offsetHeight / 2;
+                    }
+
+                    function drawNoise() {
+                        const w = noiseCanvas.width;
+                        const h = noiseCanvas.height;
+                        if (w === 0 || h === 0) return;
+
+                        const idata = ctx.createImageData(w, h);
+                        const buffer32 = new Uint32Array(idata.data.buffer);
+                        const len = buffer32.length;
+
+                        for (let i = 0; i < len; i++) {
+                            if (Math.random() < 0.5) {
+                                // Dark gray static
+                                const val = Math.random() * 50;
+                                buffer32[i] = (255 << 24) | (val << 16) | (val << 8) | val;
+                            } else {
+                                // Transparent
+                                buffer32[i] = 0;
+                            }
+                        }
+                        ctx.putImageData(idata, 0, 0);
+                        noiseAnimId = requestAnimationFrame(drawNoise);
+                    }
+
+                    // Sequence Logic
+                    setTimeout(() => {
+                        // Title fade out complete
+                        title.style.display = 'none';
+                        container.style.display = 'flex';
+
+                        // Allow reflow
+                        requestAnimationFrame(() => {
+                            container.style.opacity = '1';
+                            resizeCanvas();
+                            drawNoise();
+
+                            // Reveal Image Logic
+                            setTimeout(() => {
+                                imgEl.style.opacity = '1';
+                                noiseCanvas.style.opacity = '0'; // Fade out noise
+
+                                // Show CTA
+                                cta.classList.add('visible');
+                            }, 1200);
+                        });
+                    }, 3000); // 4.5s wait (matches css 5s slightly earlier)
+
+                    window.finishIntro = function () {
+                        window.scrollTo(0, 0); // Scroll to top
+                        overlay.style.transition = 'opacity 1s ease';
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            overlay.remove();
+                            if (noiseAnimId) cancelAnimationFrame(noiseAnimId);
+                        }, 1000);
+                    };
+
+                    // === DYNAMIC GALLERY GENERATION ===
+                    document.addEventListener("DOMContentLoaded", () => {
+                        const galleryGrid = document.getElementById('system-gallery-grid');
+                        if (!galleryGrid) return;
+
+                        // Filter to only include vision images (just in case) and create sorting array
+                        // We want 'randomImage' to be the FIRST one.
+                        // The rest should be shuffled randomly.
+                        let otherImages = visionImages.filter(img => img !== randomImage);
+
+                        // Fisher-Yates Shuffle for the other images
+                        for (let i = otherImages.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [otherImages[i], otherImages[j]] = [otherImages[j], otherImages[i]];
+                        }
+
+                        let galleryImages = [randomImage, ...otherImages];
+
+                        const totalImages = galleryImages.length; // Should be 54
+
+                        galleryImages.forEach((imgSrc, index) => {
+                            // Create Gallery Item HTML
+
+                            // Fig Number: Starts at 54 (Total) and goes down to 1.
+                            // If index is 0 (first image), figNumber is 54.
+                            // If index is 53 (last image), figNumber is 1.
+                            const figNumber = totalImages - index;
+                            // Format with leading zeros if needed (e.g. 054, 001) - though 54 is just 2 digits.
+                            // The original code used 00${itemIndex}, so for 1 it was 001.
+                            // For 54 it should probably be 054 to match 3 digits style or just 54?
+                            // User asked for "FIG_001" style. Let's assume 3 digits padding.
+                            const figString = figNumber.toString().padStart(3, '0');
+
+                            const itemHtml = `
+                                <div class="group glass-panel p-2 relative cursor-pointer overflow-hidden transition-all duration-300 hover:border-noise-accent/50 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]"
+                                    onclick="openLightbox('${imgSrc}')">
+                                    <div class="relative h-64 overflow-hidden bg-black">
+                                        <img src="${imgSrc}" alt="System File ${figString}"
+                                            class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 filter group-hover:contrast-125">
+                                        <div
+                                            class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80">
+                                        </div>
+                                        <div
+                                            class="absolute bottom-0 left-0 p-4 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                            <div class="flex justify-between items-end border-b border-noise-accent/30 pb-2 mb-2">
+                                                <span class="text-noise-accent font-mono text-xs font-bold">FIG_${figString}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
+                                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
+                                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
+                                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
+                                </div>
+                             `;
+                            galleryGrid.innerHTML += itemHtml;
+                        });
+                    });
+                })();
+        </script>
+    </div>
     <!-- SVG Filters for Title Animation -->
     <svg style="display: none;">
         <defs>
@@ -2386,11 +2782,98 @@
                 </div>
             </div>
         </div>
-        <div class="mt-16 text-center border-t border-gray-800 pt-8">
-            <p class="italic text-gray-400">"Es la IA mostrando su ADN matemático en forma visual."</p>
+
+        <!-- SYSTEM ARCHIVES GALLERY -->
+        <section class="max-w-7xl mx-auto px-6 py-24 border-t border-gray-800 relative overflow-hidden">
+            <div
+                class="absolute inset-0 bg-noise-accent/5 opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+            </div>
+
+            <div class="mb-16 relative">
+                <h2 class="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tighter uppercase particle-text">
+                    Nuevas Visiones
+                </h2>
+                <div class="h-1 w-24 bg-noise-accent"></div>
+                <p class="text-gray-400 font-mono text-xs mt-4 tracking-widest uppercase">
+                    // ACCESO AUTORIZADO: NIVEL 5<br>
+                    // VISUALIZACIÓN DE ARTEFACTOS GENERADOS
+                </p>
+            </div>
+
+            <div id="system-gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic Content Injected by JS -->
+            </div> <!-- Geometria -->
+            <!--  <div class="group glass-panel p-2 relative cursor-pointer overflow-hidden transition-all duration-300 hover:border-noise-accent/50 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]"
+                onclick="openLightbox('assets-proyecto/geometria.png')">
+                <div class="relative h-64 overflow-hidden bg-black">
+                    <img src="assets-proyecto/geometria.png" alt="Geometry"
+                        class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 filter group-hover:contrast-125">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80">
+                    </div>
+                    <div
+                        class="absolute bottom-0 left-0 p-4 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        <div class="flex justify-between items-end border-b border-noise-accent/30 pb-2 mb-2">
+                            <span class="text-noise-accent font-mono text-xs font-bold">FIG_GEO</span>
+                            <span class="text-white/50 font-mono text-[10px]">GEOMETRÍA</span>
+                        </div>
+                    </div>
+                </div>-->
+            <!-- Brackets -->
+            <div
+                class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            <div
+                class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            <div
+                class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            </div>
+
+            <!-- Punto Central -->
+            <!-- <div class="group glass-panel p-2 relative cursor-pointer overflow-hidden transition-all duration-300 hover:border-noise-accent/50 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]"
+                onclick="openLightbox('assets-proyecto/punto-central.png')">
+                <div class="relative h-64 overflow-hidden bg-black">
+                    <img src="assets-proyecto/punto-central.png" alt="Center Point"
+                        class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 filter group-hover:contrast-125">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80">
+                    </div>
+                    <div
+                        class="absolute bottom-0 left-0 p-4 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        <div class="flex justify-between items-end border-b border-noise-accent/30 pb-2 mb-2">
+                            <span class="text-noise-accent font-mono text-xs font-bold">FIG_CTR</span>
+                            <span class="text-white/50 font-mono text-[10px]">PUNTO_CENTRAL</span>
+                        </div>
+                    </div>
+                </div>-->
+            <!-- Brackets -->
+            <div
+                class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            <div
+                class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            <div
+                class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300">
+            </div>
+            </div>
+
+            </div>
+        </section>
+        <footer class="text-center border-t border-gray-800 pt-8">
+            <!--<p class="italic text-gray-400">"Es la IA mostrando su ADN matemático en forma visual."</p>-->
             <p class="text-sm font-mono mt-4 text-gray-600">Santiago Slavutsky</p>
-        </div>
+        </footer>
     </section>
+
+
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         function exportPage() {
