@@ -1401,7 +1401,7 @@
             { id: 'user_root', type: 'human', label: 'USUARIO', sub: 'Investigación, armado conceptual y preparación de prompts', x: 600, y: 100, desc: "El punto de partida. Investigación conceptual, definición de estética y redacción de prompts iniciales." },
 
             // FASE 1
-            { id: 'ia_comfy', type: 'ai', label: 'IA: SDXL', sub: 'Plataforma: ComfyUI | Acción: Txt2Img', x: 250, y: 300, phase: 1, desc: "Generación de imágenes con 5 prompts distintos, utilizando Stable Diffusion XL a través de ComfyUI para un control nodal preciso." },
+            { id: 'ia_comfy', type: 'ai', label: 'IA: SDXL', sub: 'Plataforma: ComfyUI | Acción: Txt2Img', x: 250, y: 300, phase: 1, desc: "Generación de imágenes con 6 prompts distintos, utilizando Stable Diffusion XL a través de ComfyUI para un control nodal preciso." },
             { id: 'img_static', type: 'file', label: 'IMÁGENES ESTÁTICAS', sub: 'Visiones Estáticas', x: 250, y: 450, phase: 1, desc: "Colección de archivos PNG en 1280x720 que servirán como fotogramas clave para img2vid." },
 
             // FASE 3 (Parallel start)
@@ -1428,7 +1428,7 @@
 
         const connections = [
             // From Root
-            { from: 'user_root', to: 'ia_comfy', label: '5 Prompts Conceptuales' },
+            { from: 'user_root', to: 'ia_comfy', label: '6 Prompts Conceptuales' },
             { from: 'user_root', to: 'ia_gpt', label: 'Prompt Lógico' },
             { from: 'user_root', to: 'ia_eleven', label: 'Prompt Descriptivo' },
             { from: 'user_root', to: 'ia_grok', label: 'Prompt Contextual', curve: 'loose' },
