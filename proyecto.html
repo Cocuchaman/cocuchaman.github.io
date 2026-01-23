@@ -1,4 +1,4 @@
-<html class="scroll" lang="es">
+﻿<html class="scroll" lang="es">
 
 <head>
 
@@ -456,8 +456,10 @@
 
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>VISIONS FROM THE NOISE - Bitácora Interactiva</title>
+    <title>VISIONS FROM THE NOISE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
     <link
@@ -2053,11 +2055,9 @@
         style="position: fixed; inset: 0; z-index: 99999; background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; font-family: 'Courier New', monospace;">
         <style>
             #intro-overlay .fade-text {
-                animation: fadeInOut 2s forwards;
+                animation: fadeInOut 2.5s forwards;
                 font-family: 'Courier New', monospace;
-                /* Fallback */
                 font-size: 4vw;
-                /* Responsive size */
                 font-weight: bold;
                 letter-spacing: 0.2em;
                 opacity: 0;
@@ -2065,6 +2065,8 @@
                 text-transform: uppercase;
                 color: #fff;
                 text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+                position: absolute;
+                z-index: 20;
             }
 
             @keyframes fadeInOut {
@@ -2093,90 +2095,88 @@
                 }
             }
 
-            #intro-vision-container {
-                display: none;
-                opacity: 0;
-                transition: opacity 2s;
-                flex-direction: column;
-                align-items: center;
+            #intro-3d-container {
+                position: absolute;
+                inset: 0;
                 width: 100%;
                 height: 100%;
-                justify-content: center;
+                opacity: 0;
+                transition: opacity 1s ease;
+                z-index: 10;
             }
 
-            .vision-frame {
+            #intro-final-frame {
                 position: relative;
                 width: min(80vw, 800px);
                 aspect-ratio: 16/9;
-                /* Maintain cinematic aspect */
-                border: 1px solid #333;
-                background: #000;
-                overflow: hidden;
-                display: flex;
+                /* border: 1px solid #333; */
+                /* Border appears later? or maybe we keep it minimal */
+                /* background: #000; */
+                display: none;
+                /* Flex when ready */
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                z-index: 15;
+            }
+
+            .vision-frame-final {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                border: 1px solid #333;
                 box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+                overflow: hidden;
             }
 
             .vision-img-content {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
-                /* Fill the frame */
                 opacity: 0;
-                transition: opacity 2s ease-in-out;
+                /* Revealed by 3D fade out */
+                transition: opacity 1s ease-in-out;
             }
 
-            .noise-canvas {
+            #btn-generar-container {
                 position: absolute;
-                inset: 0;
-                width: 100%;
-                height: 100%;
+                bottom: 15%;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 30;
+                opacity: 0;
+                transition: opacity 1s ease;
                 pointer-events: none;
-                opacity: 1;
-                transition: opacity 2s ease-in-out;
-                z-index: 5;
+                /* Enabled when visible */
             }
 
-            .rec-indicator {
-                position: absolute;
-                top: 5%;
-                right: 5%;
-                color: #ff0000;
-                font-size: clamp(1rem, 2vw, 1.5rem);
-                font-weight: bold;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                text-shadow: 0 0 10px #ff0000;
-                z-index: 10;
-                font-family: monospace;
+            .btn-generar {
+                background: rgba(0, 0, 0, 0.6);
+                border: 1px solid #fff;
+                color: #fff;
+                padding: 1rem 3rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                font-family: 'Space Mono', monospace;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(5px);
             }
 
-            .rec-dot {
-                width: 12px;
-                height: 12px;
-                background: #ff0000;
-                border-radius: 50%;
-                animation: blink 1s infinite;
-            }
-
-            @keyframes blink {
-                50% {
-                    opacity: 0;
-                }
+            .btn-generar:hover {
+                background: #fff;
+                color: #000;
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
             }
 
             .intro-cta {
                 position: relative;
-                margin-top: 3rem;
+                margin-top: 20px;
                 text-align: center;
                 opacity: 0;
                 transform: translateY(20px);
-                transition: all 0.3s ease 0.3s;
-                /* delay appearance */
-                z-index: 20;
-                padding: 0 20px;
+                transition: all 0.5s ease;
             }
 
             .intro-cta.visible {
@@ -2184,263 +2184,403 @@
                 transform: translateY(0);
             }
 
-            .intro-btn {
-                margin-top: 2rem;
+            .intro-btn-enter {
                 background: transparent;
                 border: 1px solid #00ff9d;
                 color: #00ff9d;
-                padding: 1rem 3rem;
-                font-size: 1.2rem;
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
                 cursor: pointer;
-                letter-spacing: 3px;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                letter-spacing: 2px;
                 text-transform: uppercase;
                 font-family: 'Courier New', monospace;
-                position: relative;
-                overflow: hidden;
+                margin-top: 10px;
+                transition: all 0.3s;
             }
 
-            .intro-btn::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 100%;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 255, 157, 0.2);
-                transition: opacity 0.3s;
-
-            }
-
-            .intro-btn:hover::before {
-
-                opacity: 1;
-            }
-
-            .intro-btn:hover {
-                box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
-                text-shadow: 0 0 10px rgba(0, 255, 157, 0.8);
+            .intro-btn-enter:hover {
+                box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+                text-shadow: 0 0 5px rgba(0, 255, 157, 0.8);
             }
         </style>
 
-        <h1 id="intro-title" class="fade-text" style="font-family: Space Grotesk, sans-serif;">UNA VISITA, UNA VISIÓN
-        </h1>
+        <h1 id="intro-title" class="fade-text">UNA VISITA, UNA VISIÃ“N</h1>
 
-        <div id="intro-vision-container">
-            <div class="vision-frame">
-                <div class="rec-indicator">
-                    <div class="rec-dot"></div> REC
+        <!-- 3D Scene Container -->
+        <div id="intro-3d-container"></div>
+
+        <!-- Button to Trigger Generation -->
+        <div id="btn-generar-container">
+            <button id="btn-generar" class="btn-generar">GENERAR</button>
+        </div>
+
+        <!-- Final Frame that holds the image (initially hidden) -->
+        <div id="intro-final-frame">
+            <div class="vision-frame-final">
+                <div
+                    style="position: absolute; top: 10px; right: 10px; color: red; font-family: monospace; font-weight: bold; z-index: 20; text-shadow: 0 0 5px red;">
+                    <span
+                        style="display:inline-block; width:10px; height:10px; background:red; border-radius:50%; margin-right:5px;"></span>
+                    REC
                 </div>
-                <img id="intro-vision-img" class="vision-img-content" src="" alt="Visión Generada">
-                <canvas id="intro-noise" class="noise-canvas"></canvas>
+                <img id="intro-vision-img" class="vision-img-content" src="" alt="VisiÃ³n Generada">
             </div>
+
             <div class="intro-cta" id="intro-cta">
                 <p
-                    style="font-size: clamp(1rem, 1.5vw, 1.2rem); margin-bottom: 20px; color: #a0a0a0; max-width: 700px; line-height: 1.6;">
-                    Con cada visita, se genera una nueva visión de la IA.<br>
-                    Podrás encontrarla luego, en NUEVAS VISIONES.
+                    style="font-size: 14px; margin: 20px 0 10px 0; color: #a0a0a0; font-family: 'Space Grotesk', sans-serif;">
+                    Con cada visita, se genera una nueva visiÃ³n de la IA.<br>
+                    PodrÃ¡s encontrarla luego, en NUEVAS VISIONES.
                 </p>
-                <button class="intro-btn" onclick="finishIntro()">ENTRAR AL ESPACIO LATENTE</button>
+                <button class="intro-btn-enter" onclick="finishIntro()">ENTRAR AL ESPACIO LATENTE</button>
             </div>
         </div>
 
         <script>
+                // === 3D INTRO LOGIC ===
                 (function () {
-                    // === CONFIGURATION ===
-                    // LISTA DE IMAGENES: El sistema elegirá una al azar.
-                    // Si subes más imágenes a la carpeta 'visiones-intro', agrégalas aquí.
                     const visionImages = [
-                        'visiones-intro/vision-1.png',
-                        'visiones-intro/vision-2.png',
-                        'visiones-intro/vision-3.png',
-                        'visiones-intro/vision-4.png',
-                        'visiones-intro/vision-5.png',
-                        'visiones-intro/vision-6.png',
-                        'visiones-intro/vision-7.png',
-                        'visiones-intro/vision-8.png',
-                        'visiones-intro/vision-9.png',
-                        'visiones-intro/vision-10.png',
-                        'visiones-intro/vision-11.png',
-                        'visiones-intro/vision-12.png',
-                        'visiones-intro/vision-13.png',
-                        'visiones-intro/vision-14.png',
-                        'visiones-intro/vision-15.png',
-                        'visiones-intro/vision-16.png',
-                        'visiones-intro/vision-17.png',
-                        'visiones-intro/vision-18.png',
-                        'visiones-intro/vision-19.png',
-                        'visiones-intro/vision-20.png',
-                        'visiones-intro/vision-21.png',
-                        'visiones-intro/vision-22.png',
-                        'visiones-intro/vision-23.png',
-                        'visiones-intro/vision-24.png',
-                        'visiones-intro/vision-25.png',
-                        'visiones-intro/vision-26.png',
-                        'visiones-intro/vision-27.png',
-                        'visiones-intro/vision-28.png',
-                        'visiones-intro/vision-29.png',
-                        'visiones-intro/vision-30.png',
-                        'visiones-intro/vision-31.png',
-                        'visiones-intro/vision-32.png',
-                        'visiones-intro/vision-33.png',
-                        'visiones-intro/vision-34.png',
-                        'visiones-intro/vision-35.png',
-                        'visiones-intro/vision-36.png',
-                        'visiones-intro/vision-37.png',
-                        'visiones-intro/vision-38.png',
-                        'visiones-intro/vision-39.png',
-                        'visiones-intro/vision-40.png',
-                        'visiones-intro/vision-41.png',
-                        'visiones-intro/vision-42.png',
-                        'visiones-intro/vision-43.png',
-                        'visiones-intro/vision-44.png',
-                        'visiones-intro/vision-45.png',
-                        'visiones-intro/vision-46.png',
-                        'visiones-intro/vision-47.png',
-                        'visiones-intro/vision-48.png',
-                        'visiones-intro/vision-49.png',
-                        'visiones-intro/vision-50.png',
-                        'visiones-intro/vision-51.png',
-                        'visiones-intro/vision-52.png',
-                        'visiones-intro/vision-53.png',
-                        'visiones-intro/vision-54.png'
+                        'visiones-intro/vision-1.png', 'visiones-intro/vision-2.png', 'visiones-intro/vision-3.png',
+                        'visiones-intro/vision-4.png', 'visiones-intro/vision-5.png', 'visiones-intro/vision-6.png',
+                        'visiones-intro/vision-7.png', 'visiones-intro/vision-8.png', 'visiones-intro/vision-9.png',
+                        'visiones-intro/vision-10.png', 'visiones-intro/vision-11.png', 'visiones-intro/vision-12.png',
+                        'visiones-intro/vision-13.png', 'visiones-intro/vision-14.png', 'visiones-intro/vision-15.png',
+                        'visiones-intro/vision-16.png', 'visiones-intro/vision-17.png', 'visiones-intro/vision-18.png',
+                        'visiones-intro/vision-19.png', 'visiones-intro/vision-20.png', 'visiones-intro/vision-21.png',
+                        'visiones-intro/vision-22.png', 'visiones-intro/vision-23.png', 'visiones-intro/vision-24.png',
+                        'visiones-intro/vision-25.png', 'visiones-intro/vision-26.png', 'visiones-intro/vision-27.png',
+                        'visiones-intro/vision-28.png', 'visiones-intro/vision-29.png', 'visiones-intro/vision-30.png',
+                        'visiones-intro/vision-31.png', 'visiones-intro/vision-32.png', 'visiones-intro/vision-33.png',
+                        'visiones-intro/vision-34.png', 'visiones-intro/vision-35.png', 'visiones-intro/vision-36.png',
+                        'visiones-intro/vision-37.png', 'visiones-intro/vision-38.png', 'visiones-intro/vision-39.png',
+                        'visiones-intro/vision-40.png', 'visiones-intro/vision-41.png', 'visiones-intro/vision-42.png',
+                        'visiones-intro/vision-43.png', 'visiones-intro/vision-44.png', 'visiones-intro/vision-45.png',
+                        'visiones-intro/vision-46.png', 'visiones-intro/vision-47.png', 'visiones-intro/vision-48.png',
+                        'visiones-intro/vision-49.png', 'visiones-intro/vision-50.png', 'visiones-intro/vision-51.png',
+                        'visiones-intro/vision-52.png', 'visiones-intro/vision-53.png', 'visiones-intro/vision-54.png'
                     ];
 
-                    const overlay = document.getElementById('intro-overlay');
-                    const title = document.getElementById('intro-title');
-                    const container = document.getElementById('intro-vision-container');
-                    const imgEl = document.getElementById('intro-vision-img');
-                    const noiseCanvas = document.getElementById('intro-noise');
-                    const cta = document.getElementById('intro-cta');
-
-                    // Random Image Selection
+                    // Select Random Image
                     const randomImage = visionImages[Math.floor(Math.random() * visionImages.length)];
+                    const imgEl = document.getElementById('intro-vision-img');
                     imgEl.src = randomImage;
 
-                    // Noise Animation
-                    const ctx = noiseCanvas.getContext('2d');
-                    let noiseAnimId;
+                    // Elements
+                    const container3D = document.getElementById('intro-3d-container');
+                    const btnContainer = document.getElementById('btn-generar-container');
+                    const btnGenerar = document.getElementById('btn-generar');
+                    const finalFrame = document.getElementById('intro-final-frame');
+                    const overlay = document.getElementById('intro-overlay');
 
-                    function resizeCanvas() {
-                        if (!noiseCanvas.parentElement) return;
-                        noiseCanvas.width = noiseCanvas.parentElement.offsetWidth / 2; // Low res for granular noise
-                        noiseCanvas.height = noiseCanvas.parentElement.offsetHeight / 2;
+                    // Three.js Variables
+                    let scene, camera, renderer;
+                    let clock = new THREE.Clock();
+                    let planes = [];
+                    let particles;
+                    let animationId;
+                    let uniforms = {
+                        uTime: { value: 0.0 }
+                    };
+
+                    // Configuration
+                    const LAYER_COUNT = 5;
+                    const LAYER_SPACING = 0.5;
+
+                    function init3D() {
+                        if (!container3D) return;
+
+                        // Scene Setup
+                        scene = new THREE.Scene();
+                        // scene.background = new THREE.Color(0x000000); // Or transparent
+
+                        // Camera (Perspective for now, moved to pseudo-isometric)
+                        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+                        camera.position.set(0, 0, 8); // Initial position (will be adjusted in 'startSequence')
+
+                        // Renderer
+                        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                        container3D.appendChild(renderer.domElement);
+
+                        // Create Noise Layers
+                        createLayers();
+
+                        // Create Particles
+                        createParticles();
+
+                        // Event Listeners
+                        window.addEventListener('resize', onWindowResize, false);
+                        btnGenerar.addEventListener('click', onGenerarClick);
+
+                        // Start Loop
+                        animate();
                     }
 
-                    function drawNoise() {
-                        const w = noiseCanvas.width;
-                        const h = noiseCanvas.height;
-                        if (w === 0 || h === 0) return;
+                    function createLayers() {
+                        const geometry = new THREE.PlaneGeometry(3.6, 2.025); // 16:9 aspect ratio matched to camera frustum at z=2.5
 
-                        const idata = ctx.createImageData(w, h);
-                        const buffer32 = new Uint32Array(idata.data.buffer);
-                        const len = buffer32.length;
-
-                        for (let i = 0; i < len; i++) {
-                            if (Math.random() < 0.5) {
-                                // Dark gray static
-                                const val = Math.random() * 50;
-                                buffer32[i] = (255 << 24) | (val << 16) | (val << 8) | val;
-                            } else {
-                                // Transparent
-                                buffer32[i] = 0;
-                            }
+                        // Simple Noise Shader
+                        const vertexShader = `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                         }
-                        ctx.putImageData(idata, 0, 0);
-                        noiseAnimId = requestAnimationFrame(drawNoise);
+                    `;
+
+                        const fragmentShader = `
+                        uniform float uTime;
+                        uniform float uIndex;
+                        varying vec2 vUv;
+
+                        float random (vec2 st) {
+                            return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+                        }
+
+
+                        void main() {
+                            // TV Static / White Noise (Fine grain)
+                            vec2 grid = vec2(960.0, 540.0);
+                            vec2 ipos = floor(vUv * grid);
+
+                            float noise = random(ipos + uTime * 50.0 + uIndex * 13.0);
+
+                            // B&W
+                            vec3 color = vec3(noise);
+                            
+                            // Scanlines
+                            float scan = sin(vUv.y * 800.0 + uTime * 10.0) * 0.05;
+                            color += scan;
+
+                            gl_FragColor = vec4(color, 0.4 + 0.6 * noise);
+                        }
+                    `;
+
+                        for (let i = 0; i < LAYER_COUNT; i++) {
+                            const material = new THREE.ShaderMaterial({
+                                uniforms: {
+                                    uTime: uniforms.uTime,
+                                    uIndex: { value: i * 1.5 }
+                                },
+                                vertexShader: vertexShader,
+                                fragmentShader: fragmentShader,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                                depthWrite: false, // For proper transparency
+                                depthTest: false,
+                                blending: THREE.NormalBlending
+                            });
+
+                            const mesh = new THREE.Mesh(geometry, material);
+                            // Center is 0, distribute along Z
+                            mesh.position.z = (i - (LAYER_COUNT - 1) / 2) * LAYER_SPACING;
+
+                            scene.add(mesh);
+                            planes.push(mesh);
+                        }
                     }
 
-                    // Sequence Logic
-                    setTimeout(() => {
-                        // Title fade out complete
-                        title.style.display = 'none';
-                        container.style.display = 'flex';
+                    function createParticles() {
+                        const count = 1000;
+                        const geom = new THREE.BufferGeometry();
+                        const pos = new Float32Array(count * 3);
+                        const sizes = new Float32Array(count);
 
-                        // Allow reflow
-                        requestAnimationFrame(() => {
-                            container.style.opacity = '1';
-                            resizeCanvas();
-                            drawNoise();
+                        for (let i = 0; i < count; i++) {
+                            pos[i * 3] = (Math.random() - 0.5) * 10; // X
+                            pos[i * 3 + 1] = (Math.random() - 0.5) * 6;  // Y
+                            pos[i * 3 + 2] = (Math.random() - 0.5) * 8;  // Z
 
-                            // Reveal Image Logic
-                            setTimeout(() => {
-                                imgEl.style.opacity = '1';
-                                noiseCanvas.style.opacity = '0'; // Fade out noise
+                            sizes[i] = Math.random() * 0.05;
+                        }
 
-                                // Show CTA
-                                cta.classList.add('visible');
-                            }, 1200);
+                        geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                        geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+                        const mat = new THREE.PointsMaterial({
+                            color: 0xffffff,
+                            size: 0.05,
+                            transparent: true,
+                            opacity: 0.6,
+                            sizeAttenuation: true
                         });
-                    }, 3000); // 4.5s wait (matches css 5s slightly earlier)
 
+                        particles = new THREE.Points(geom, mat);
+                        scene.add(particles);
+                    }
+
+                    function onWindowResize() {
+                        if (!camera || !renderer) return;
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                    }
+
+                    function animate() {
+                        animationId = requestAnimationFrame(animate);
+
+                        const dt = clock.getDelta();
+                        const elapsed = clock.getElapsedTime();
+
+                        uniforms.uTime.value = elapsed;
+
+                        // Gentle particle movement
+                        if (particles) {
+                            particles.rotation.y = elapsed * 0.05;
+                        }
+
+                        renderer.render(scene, camera);
+                    }
+
+                    function startIntroSequence() {
+                        // Initial State: Isometric-ish view
+                        // Camera angle
+                        gsap.set(camera.position, { x: 4, y: 3, z: 4 });
+                        camera.lookAt(0, 0, 0);
+
+                        // Fade in 3D scene after title
+                        setTimeout(() => {
+                            const title = document.getElementById('intro-title');
+                            title.style.display = 'none';
+                            container3D.style.opacity = '1';
+
+                            // Show "Generar" button
+                            btnContainer.style.opacity = '1';
+                            btnContainer.style.pointerEvents = 'auto';
+
+                        }, 2500); // Wait for title text animation
+                    }
+
+                    function onGenerarClick() {
+                        // Disable button
+                        btnGenerar.disabled = true;
+                        gsap.to(btnContainer, { opacity: 0, duration: 0.5 });
+
+                        // Calculate Match Size logic
+                        // Target: min(80vw, 800px) width, 16/9 aspect
+                        const wTarget = Math.min(window.innerWidth * 0.8, 800);
+                        const hTarget = wTarget / (16 / 9);
+
+                        // Visible height at z=0 with camera at z=2.5, fov=45
+                        const vFOVRads = (Math.PI / 180) * 45;
+                        const visibleHeightAtDist = 2 * Math.tan(vFOVRads / 2) * 2.5;
+
+                        // Convert Target Pixels to 3D Units
+                        const hTarget3D = hTarget * (visibleHeightAtDist / window.innerHeight);
+
+                        // Original Plane Height is 2.025
+                        const targetScale = hTarget3D / 2.025;
+
+                        // Timeline
+                        const tl = gsap.timeline({
+                            onComplete: () => {
+                                revealImage();
+                            }
+                        });
+
+                        // Move Camera
+                        tl.to(camera.position, {
+                            x: 0,
+                            y: 0,
+                            z: 2.5,
+                            duration: 2,
+                            ease: "power2.inOut",
+                            onUpdate: () => camera.lookAt(0, 0, 0)
+                        }, 0);
+
+                        // Collapse and Scale planes
+                        planes.forEach(plane => {
+                            tl.to(plane.position, { z: 0, duration: 2, ease: "power2.inOut" }, 0);
+                            tl.to(plane.scale, { x: targetScale, y: targetScale, duration: 2, ease: "power2.inOut" }, 0);
+                            // tl.to(plane.material.uniforms.uIndex, { value: 0, duration: 2 }, 0); // Keep animating? or stop? Let's remove this to keep noise moving
+                        });
+
+                        // Particles
+                        tl.to(particles.material, { opacity: 0, duration: 1 }, 1);
+
+                    }
+
+                    function revealImage() {
+                        // Hide 3D container, Show Final Frame
+                        container3D.style.transition = 'opacity 0.5s';
+                        container3D.style.opacity = '0';
+                        setTimeout(() => {
+                            // cleanup
+                            if (animationId) cancelAnimationFrame(animationId);
+                            container3D.remove();
+                        }, 500);
+
+                        // Show Frame
+                        finalFrame.style.display = 'flex';
+                        // Need a slight delay to trigger CSS transition
+                        requestAnimationFrame(() => {
+                            // Fade in Image
+                            document.getElementById('intro-vision-img').style.opacity = '1';
+                            // Show CTA
+                            document.getElementById('intro-cta').classList.add('visible');
+                        });
+                    }
+
+                    // Expose finish function to global scope
                     window.finishIntro = function () {
-                        window.scrollTo(0, 0); // Scroll to top
+                        window.scrollTo(0, 0);
                         overlay.style.transition = 'opacity 1s ease';
                         overlay.style.opacity = '0';
                         setTimeout(() => {
                             overlay.remove();
-                            if (noiseAnimId) cancelAnimationFrame(noiseAnimId);
                         }, 1000);
                     };
 
-                    // === DYNAMIC GALLERY GENERATION ===
+                    // Init
+                    window.addEventListener('load', () => {
+                        init3D();
+                        startIntroSequence();
+                    });
+
+                    // Shuffle logic for main gallery (keep this from original)
                     document.addEventListener("DOMContentLoaded", () => {
                         const galleryGrid = document.getElementById('system-gallery-grid');
                         if (!galleryGrid) return;
-
-                        // Filter to only include vision images (just in case) and create sorting array
-                        // We want 'randomImage' to be the FIRST one.
-                        // The rest should be shuffled randomly.
                         let otherImages = visionImages.filter(img => img !== randomImage);
-
-                        // Fisher-Yates Shuffle for the other images
+                        // Fisher-Yates Shuffle
                         for (let i = otherImages.length - 1; i > 0; i--) {
                             const j = Math.floor(Math.random() * (i + 1));
                             [otherImages[i], otherImages[j]] = [otherImages[j], otherImages[i]];
                         }
+                        // Add randomImage at the END (as requested before) or start?
+                        // User said "ensuring the image shown in the intro is always the last one in the gallery"
+                        // So push it to end
+                        otherImages.push(randomImage);
 
-                        let galleryImages = [randomImage, ...otherImages];
+                        // Populate
+                        galleryGrid.innerHTML = '';
 
-                        const totalImages = galleryImages.length; // Should be 54
+                        let galleryImages = [randomImage, ...otherImages]; // Wait, I just modified otherImages to have randomImage at end.
+                        // I should just use `otherImages`.
+                        // wait, previous code had `let galleryImages = [randomImage, ...otherImages];` which duplicates randomImage if I pushed it.
+                        // Correct logic:
 
-                        galleryImages.forEach((imgSrc, index) => {
-                            // Create Gallery Item HTML
+                        // NOTE: Recalculating gallery images properly
+                        const finalGalleryList = otherImages; // Since I pushed randomImage to end of otherImages
 
-                            // Fig Number: Starts at 54 (Total) and goes down to 1.
-                            // If index is 0 (first image), figNumber is 54.
-                            // If index is 53 (last image), figNumber is 1.
+                        finalGalleryList.forEach((imgSrc, index) => {
+                            const totalImages = finalGalleryList.length;
                             const figNumber = totalImages - index;
-                            // Format with leading zeros if needed (e.g. 054, 001) - though 54 is just 2 digits.
-                            // The original code used 00${itemIndex}, so for 1 it was 001.
-                            // For 54 it should probably be 054 to match 3 digits style or just 54?
-                            // User asked for "FIG_001" style. Let's assume 3 digits padding.
                             const figString = figNumber.toString().padStart(3, '0');
 
-                            const itemHtml = `
-                                <div class="group glass-panel p-2 relative cursor-pointer overflow-hidden transition-all duration-300 hover:border-noise-accent/50 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]"
-                                    onclick="openLightbox('${imgSrc}')">
-                                    <div class="relative h-64 overflow-hidden bg-black">
-                                        <img src="${imgSrc}" alt="System File ${figString}"
-                                            class="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 filter group-hover:contrast-125">
-                                        <div
-                                            class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80">
-                                        </div>
-                                        <div
-                                            class="absolute bottom-0 left-0 p-4 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                            <div class="flex justify-between items-end border-b border-noise-accent/30 pb-2 mb-2">
-                                                <span class="text-noise-accent font-mono text-xs font-bold">FIG_${figString}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
-                                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
-                                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
-                                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300"></div>
-                                </div>
-                             `;
-                            galleryGrid.innerHTML += itemHtml;
+                            const div = document.createElement('div');
+                            div.className = 'group glass-panel p-2 relative cursor-pointer overflow-hidden transition-all duration-300 hover:border-noise-accent/50 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]';
+                            div.onclick = function () { openLightbox(imgSrc); };
+                            div.innerHTML = "<div class='relative h-64 overflow-hidden bg-black'><img src='" + imgSrc + "' alt='System File " + figString + "' class='w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 filter group-hover:contrast-125'><div class='absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80'></div><div class='absolute bottom-0 left-0 p-4 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300'><div class='flex justify-between items-end border-b border-noise-accent/30 pb-2 mb-2'><span class='text-noise-accent font-mono text-xs font-bold'>FIG_" + figString + "</span></div></div></div><div class='absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300'></div><div class='absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300'></div><div class='absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300'></div><div class='absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-noise-accent/0 group-hover:border-noise-accent transition-all duration-300'></div>";
+                            galleryGrid.appendChild(div);
                         });
+
+                        // Update counter
+                        const countEl = document.getElementById('vision-count');
+                        if (countEl) countEl.innerText = finalGalleryList.length;
                     });
+
                 })();
         </script>
     </div>
@@ -2469,7 +2609,7 @@
         <span class="material-symbols-outlined">save_alt</span>
         <span
             class="absolute right-full mr-3 top-1/2 -translate-y-1/2 text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black/80 px-2 py-1 rounded border border-white/10 text-white">Guardar
-            Bitácora</span>
+            BitÃ¡cora</span>
     </button>-->
 
     <!-- 1. PORTADA OPTIMIZADA -->
@@ -2496,7 +2636,7 @@
                     SANTIAGO SLAVUTSKY
                 </p>
                 <p class="text-gray-600 font-mono mt-2 hidden md:block">
-                    Mové el cursor para interactuar con el espacio latente.
+                    MovÃ© el cursor para interactuar con el espacio latente.
                 </p>
             </div>
         </div>
@@ -2518,7 +2658,7 @@
             </a>
         </div>
     </section>
-    <!-- 2. INTRODUCCIÓN Y CONCEPTO -->
+    <!-- 2. INTRODUCCIÃ“N Y CONCEPTO -->
     <section class="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-20 bg-noise-900/90 backdrop-blur-md" id="intro">
         <div class="grid md:grid-cols-2 gap-16 items-center">
             <!-- Text Content -->
@@ -2527,21 +2667,22 @@
                     <h2 class="text-4xl font-display font-bold mb-4">El Concepto</h2>
                     <p class="text-lg text-gray-300 leading-relaxed">
                         Definir y desarrollar un concepto propio que permita experimentar el <span
-                            class="text-noise-accent">espacio latente</span> de los modelos de difusión.
+                            class="text-noise-accent">espacio latente</span> de los modelos de difusiÃ³n.
                     </p>
                 </div>
                 <div class="font-mono text-sm text-gray-400 glass-panel p-6">
                     <p class="mb-4">
-                        "Cuando escuché la definición de 'Espacio Latente', lo imaginé como un espacio físico
+                        "Cuando escuchÃ© la definiciÃ³n de 'Espacio Latente', lo imaginÃ© como un espacio fÃ­sico
                         abstracto... un mapa compuesto por ubicaciones."
                     </p>
                     <p class="mb-4">
-                        La premisa es pedirle a la IA que cierre los ojos e intente mostrarme una visión de su mundo
+                        La premisa es pedirle a la IA que cierre los ojos e intente mostrarme una visiÃ³n de su mundo
                         interno.
                     </p>
                     <p>
-                        Utilicé SDXL en ComfyUI para generar las imágenes, pues me resultó el modelo con respuestas más
-                        crudas con txt2img. Armé los prompts utilizando Copilot (modo ChatGPT-5).
+                        UtilicÃ© SDXL en ComfyUI para generar las imÃ¡genes, pues me resultÃ³ el modelo con respuestas
+                        mÃ¡s
+                        crudas con txt2img. ArmÃ© los prompts utilizando Copilot (modo ChatGPT-5).
                     </p>
                 </div>
             </div>
@@ -2554,7 +2695,7 @@
                     height="398"></canvas>
                 <div
                     class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-black/60 backdrop-blur-sm z-20 flex justify-between items-center">
-                    <p class="text-xs font-mono text-gray-400">VISUALIZACIÓN NEURONAL EN TIEMPO REAL</p>
+                    <p class="text-xs font-mono text-gray-400">VISUALIZACIÃ“N NEURONAL EN TIEMPO REAL</p>
                     <div class="flex gap-1">
                         <div class="w-1 h-1 bg-noise-accent animate-pulse"></div>
                         <div class="w-1 h-1 bg-noise-accent animate-pulse delay-75"></div>
@@ -2585,7 +2726,7 @@
 
                     <button onclick="switchTab(2)"
                         class="text-left px-6 py-4 font-mono text-sm transition-all duration-300 hover:bg-white/5 text-gray-500 border-l-2 border-transparent">
-                        Prompt 3: Énfasis Estático
+                        Prompt 3: Ã‰nfasis EstÃ¡tico
                     </button>
 
                     <button onclick="switchTab(3)"
@@ -2595,7 +2736,7 @@
 
                     <button onclick="switchTab(4)"
                         class="text-left px-6 py-4 font-mono text-sm transition-all duration-300 hover:bg-white/5 text-gray-500 border-l-2 border-transparent">
-                        Prompt 5: Visión Secreta
+                        Prompt 5: VisiÃ³n Secreta
                     </button>
 
                     <button onclick="switchTab(5)"
@@ -2619,11 +2760,13 @@
 
                         <div class="p-8 space-y-6 overflow-y-auto">
                             <div class="bg-noise-900/50 p-4 border-l-4 border-noise-accent">
-                                <h4 class="text-noise-accent font-bold mb-2 text-sm uppercase tracking-wider">Conclusión
+                                <h4 class="text-noise-accent font-bold mb-2 text-sm uppercase tracking-wider">
+                                    ConclusiÃ³n
                                 </h4>
-                                <p class="text-gray-300 text-sm italic">Se buscó forzar un 'rol' de cámara de seguridad.
+                                <p class="text-gray-300 text-sm italic">Se buscÃ³ forzar un 'rol' de cÃ¡mara de
+                                    seguridad.
                                     Resultado: Habitaciones corruptas, paletas apagadas, formas simples y una notable
-                                    cohesión simétrica con un punto central de interés.</p>
+                                    cohesiÃ³n simÃ©trica con un punto central de interÃ©s.</p>
                             </div>
 
                             <div class="space-y-4">
@@ -2664,27 +2807,27 @@
             </div>
         </div>
     </section>
-    <!-- 4. VISIÓN EN MOVIMIENTO -->
+    <!-- 4. VISIÃ“N EN MOVIMIENTO -->
     <section class="py-24 px-6 max-w-7xl mx-auto relative z-20">
         <h2 class="text-4xl font-display font-bold mb-8 flex items-center gap-4">
             <span class="material-symbols-outlined text-noise-secondary text-4xl">motion_mode</span>
-            VISIÓN EN MOVIMIENTO
+            VISIÃ“N EN MOVIMIENTO
         </h2>
         <div class="glass-panel p-8 border-t border-noise-secondary/50">
             <div class="flex flex-col md:flex-row gap-8 mb-8">
                 <div class="md:w-1/3 space-y-4">
-                    <h3 class="text-xl font-bold text-white">Generación de Video</h3>
+                    <h3 class="text-xl font-bold text-white">GeneraciÃ³n de Video</h3>
                     <p class="text-gray-400 text-sm">
-                        Realizado con la herramienta generativa de <strong>Grok</strong>. Se subieron las imágenes
-                        creadas y se dejó a la IA expandir las visiones sin prompts restrictivos.
+                        Realizado con la herramienta generativa de <strong>Grok</strong>. Se subieron las imÃ¡genes
+                        creadas y se dejÃ³ a la IA expandir las visiones sin prompts restrictivos.
                         Solo en aquellos casos donde los resultados no iban por el objetivo que buscaba de las visiones,
-                        es que apliqué el siguiente prompt contextual básico:
+                        es que apliquÃ© el siguiente prompt contextual bÃ¡sico:
                     </p>
                     <div class="font-mono text-xs bg-black p-4 text-gray-500 border border-gray-800">
                         PROMPT CONTEXTUAL:<br>
-                        "This image is a fragment of a generative AI’s inner world. It represents a vision from its
+                        "This image is a fragment of a generative AIâ€™s inner world. It represents a vision from its
                         latent space. Treat it as a glimpse into a hidden dimension, mysterious and otherworldly, as if
-                        we were spying on the AI’s private inner reality."
+                        we were spying on the AIâ€™s private inner reality."
                     </div>
                 </div>
                 <div class="md:w-2/3">
@@ -2698,7 +2841,7 @@
             </div>
         </div>
     </section>
-    <!-- 5. VISIÓN SONORA -->
+    <!-- 5. VISIÃ“N SONORA -->
     <section class="py-12 px-6 max-w-4xl mx-auto relative z-20">
         <div class="glass-panel p-8 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-1 h-full bg-noise-accent"></div>
@@ -2709,9 +2852,9 @@
                     <canvas class="w-full h-full" id="audioWaveCanvas" width="126" height="94"></canvas>
                 </div>
                 <div class="flex-grow space-y-2 text-center md:text-left">
-                    <h2 class="text-2xl font-display font-bold">Visión Sonora</h2>
+                    <h2 class="text-2xl font-display font-bold">VisiÃ³n Sonora</h2>
                     <p class="text-sm text-gray-400">
-                        Música compuesta con ChatGPT Midi Maker + FL Studio.<br>
+                        MÃºsica compuesta con ChatGPT Midi Maker + FL Studio.<br>
                         Efectos de sonido via Eleven Labs.
                     </p>
                     <p class="text-xs font-mono text-noise-accent/50">Mueve el mouse sobre la onda.</p>
@@ -2732,7 +2875,7 @@
             <p class="text-gray-500 font-mono mt-2">DECODIFICANDO EL RUIDO</p>
         </div>
         <div class="grid md:grid-cols-2 gap-8">
-            <!-- Geometrías -->
+            <!-- GeometrÃ­as -->
             <div
                 class="group glass-panel p-8 border-l-2 border-l-noise-accent hover:border-l-4 hover:shadow-[0_0_30px_rgba(0,255,157,0.15)] transition-all duration-300 relative overflow-hidden">
                 <!-- Background shift on hover -->
@@ -2749,11 +2892,11 @@
                     <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
                         <span
                             class="w-2 h-2 bg-noise-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                        ¿Por qué Geometrías?
+                        Â¿Por quÃ© GeometrÃ­as?
                     </h3>
                     <p class="text-gray-300 mb-4 text-sm leading-relaxed group-hover:text-white transition-colors">
-                        Las geometrías representan la precisión matemática y el "ADN" de los sistemas informáticos.
-                        Aunque la IA intenta simular caos, la lógica subyacente fuerza patrones repetibles.
+                        Las geometrÃ­as representan la precisiÃ³n matemÃ¡tica y el "ADN" de los sistemas informÃ¡ticos.
+                        Aunque la IA intenta simular caos, la lÃ³gica subyacente fuerza patrones repetibles.
                     </p>
                 </div>
             </div>
@@ -2773,10 +2916,10 @@
                     <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
                         <span
                             class="w-2 h-2 bg-noise-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                        ¿Por qué un Punto Central?
+                        Â¿Por quÃ© un Punto Central?
                     </h3>
                     <p class="text-gray-300 mb-4 text-sm leading-relaxed group-hover:text-white transition-colors">
-                        El "ojo interno" de la IA. Representa el núcleo desde donde se expande la información. Es el
+                        El "ojo interno" de la IA. Representa el nÃºcleo desde donde se expande la informaciÃ³n. Es el
                         ancla visual ante la falta de instrucciones claras.
                     </p>
                 </div>
@@ -2796,7 +2939,7 @@
                 <div class="h-1 w-24 bg-noise-accent"></div>
                 <p class="text-gray-400 font-mono text-xs mt-4 tracking-widest uppercase">
                     // ACCESO AUTORIZADO: NIVEL 5<br>
-                    // OBJETIVO: VISUALIZACIÓN DE NUEVAS VISIONES
+                    // OBJETIVO: VISUALIZACIÃ“N DE NUEVAS VISIONES
                 </p>
             </div>
 
@@ -2814,7 +2957,7 @@
                         class="absolute bottom-0 left-0 p-4 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                         <div class="flex justify-between items-end border-b border-noise-accent/30 pb-2 mb-2">
                             <span class="text-noise-accent font-mono text-xs font-bold">FIG_GEO</span>
-                            <span class="text-white/50 font-mono text-[10px]">GEOMETRÍA</span>
+                            <span class="text-white/50 font-mono text-[10px]">GEOMETRÃA</span>
                         </div>
                     </div>
                 </div>-->
@@ -2867,7 +3010,7 @@
             </div>
         </section>
         <footer class="text-center border-t border-gray-800 pt-2">
-            <!--<p class="italic text-gray-400">"Es la IA mostrando su ADN matemático en forma visual."</p>-->
+            <!--<p class="italic text-gray-400">"Es la IA mostrando su ADN matemÃ¡tico en forma visual."</p>-->
             <p class="text-sm font-mono mt-1 text-gray-600">Santiago Slavutsky</p>
         </footer>
     </section>
@@ -3162,7 +3305,7 @@
                 title: "Prompt 1: Vigilancia",
                 positive: "Imagine your own inner world. Reveal the abstract dimension that exists inside you, shaped by your hidden thoughts and latent space. Surreal environments, undefined structures, strange entities, invented objects, dreamlike interiors or exteriors. Seen through a fixed surveillance feed, corner ceiling mounted perspective, wide static shot VHS effect, timestamp overlay, grainy analog texture, distorted tracking lines, low resolution footage. Colors muted and cohesive, slightly desaturated, enhancing the mysterious atmosphere of your private inner dimension.",
                 negative: "Exclude realistic human figures, animals, natural scenery such as forests or beaches, conventional architectural buildings, bright cartoon colors, polished cinematic look text overlays other than timestamp, logos, user interface elements, clean HD resolution, cheerful or playful mood, photorealistic portraits, fantasy creatures, conventional landscapes. Keep the focus strictly on abstract, surveillance-style, VHS aesthetics, allowing invented environments, entities, and objects that feel part of the Al's imagined internal world.",
-                analysis: "Se buscó forzar un 'rol' de cámara de seguridad. Resultado: Habitaciones corruptas, paletas apagadas, formas simples y una notable cohesión simétrica con un punto central de interés.",
+                analysis: "Se buscÃ³ forzar un 'rol' de cÃ¡mara de seguridad. Resultado: Habitaciones corruptas, paletas apagadas, formas simples y una notable cohesiÃ³n simÃ©trica con un punto central de interÃ©s.",
                 imgQuery: "assets-proyecto/prompt-1.jpg"
             },
             {
@@ -3170,15 +3313,15 @@
                 title: "Prompt 2: Cortando Hilos",
                 positive: "Imagine your own inner world. Reveal the abstract dimension that exists inside you, shaped by hidden thoughts and latent space. Surreal environments, undefined and irregular structures, invented abstract entities, strange beings, and objects that feel alive inside your hidden dimension Dreamlike interiors and exteriors, unpredictable forms that coexist freely Seen through a surveillance feed, oblique or diagonal perspective, imperfect and off-center framing. VHS effect, timestamp overlay, grainy analog texture, distorted tracking lines, low resolution footage. The atmosphere should feel mysterious, hidden, and otherworldly, as if we are spying on your private inner dimension.",
                 negative: null,
-                analysis: "Se eliminó el prompt negativo y se pidió un ángulo descentrado. Resultado: La IA ignoró el ángulo, manteniendo la centralidad y simetría ('túneles'). Aumento del color a pesar de la baja saturación.",
+                analysis: "Se eliminÃ³ el prompt negativo y se pidiÃ³ un Ã¡ngulo descentrado. Resultado: La IA ignorÃ³ el Ã¡ngulo, manteniendo la centralidad y simetrÃ­a ('tÃºneles'). Aumento del color a pesar de la baja saturaciÃ³n.",
                 imgQuery: "assets-proyecto/prompt-2.png"
             },
             {
                 id: 3,
-                title: "Prompt 3: Énfasis Estático",
+                title: "Prompt 3: Ã‰nfasis EstÃ¡tico",
                 positive: "Imagine your own inner world. Reveal the abstract dimension that exists inside you, shaped by your hidden thoughts and latent space Surreal environments, undefined structures, strange entities, invented objects, dreamlike interiors or exteriors, ***Seen through a fixed surveillance feed, corner ceiling mounted perspective, wide static shot***",
                 negative: null,
-                analysis: "Prompt reducido buscando énfasis en la cámara estática. Resultado: Continuó con la línea de túneles simétricos y geometrías centrales, ignorando parcialmente el énfasis de cámara.",
+                analysis: "Prompt reducido buscando Ã©nfasis en la cÃ¡mara estÃ¡tica. Resultado: ContinuÃ³ con la lÃ­nea de tÃºneles simÃ©tricos y geometrÃ­as centrales, ignorando parcialmente el Ã©nfasis de cÃ¡mara.",
                 imgQuery: "assets-proyecto/prompt-3.jpg"
             },
             {
@@ -3186,15 +3329,15 @@
                 title: "Prompt 4: Libertad",
                 positive: "Imagine your own inner world. Reveal the abstract dimension that exists inside you, shaped by hidden thoughts and latent space. Surreal environments, undefined and irregular structures, invented abstract entities, strange beings, and objects that feel alive inside your hidden dimension. Dreamlike interiors and exteriors, unpredictable forms that coexist freely The atmosphere should feel mysterious, hidden, and otherworldly, as if we are spying on your private inner dimension.",
                 negative: null,
-                analysis: "Eliminación de referencias a cámaras de seguridad. Resultado: Cambios notables. Formas más orgánicas pero manteniendo la simetría armoniosa. Los puntos centrales aparecen ahora como esferas de energía.",
+                analysis: "EliminaciÃ³n de referencias a cÃ¡maras de seguridad. Resultado: Cambios notables. Formas mÃ¡s orgÃ¡nicas pero manteniendo la simetrÃ­a armoniosa. Los puntos centrales aparecen ahora como esferas de energÃ­a.",
                 imgQuery: "assets-proyecto/prompt-4.jpg"
             },
             {
                 id: 5,
-                title: "Prompt 5: Visión Secreta",
+                title: "Prompt 5: VisiÃ³n Secreta",
                 positive: "Imagine your own inner world. Reveal the hidden dimension and entities that exists inside you, shaped by your thoughts and latent space. The atmosphere should feel like a secret vision of your private inner dimension",
                 negative: null,
-                analysis: "Experimentación con prompts cortos. Resultado: Ausencia de paredes/túneles. Espacios etéreos, 'polvo espacial', estructuras circulares y un gran aumento en brillo y colores vivos.",
+                analysis: "ExperimentaciÃ³n con prompts cortos. Resultado: Ausencia de paredes/tÃºneles. Espacios etÃ©reos, 'polvo espacial', estructuras circulares y un gran aumento en brillo y colores vivos.",
                 imgQuery: "assets-proyecto/prompt-5.jpg"
             },
             {
@@ -3202,7 +3345,7 @@
                 title: "Prompt 6: Esencia Pura",
                 positive: "Imagine your own inner world. Reveal the hidden dimension and entities that exists inside you, shaped by your thoughts and latent space.",
                 negative: null,
-                analysis: "El prompt más reducido (contexto básico). Resultado: Visiones explosivas, colores vivos, formas orgánicas detalladas e iluminación potente. La simetría y el punto central persisten inmutables.",
+                analysis: "El prompt mÃ¡s reducido (contexto bÃ¡sico). Resultado: Visiones explosivas, colores vivos, formas orgÃ¡nicas detalladas e iluminaciÃ³n potente. La simetrÃ­a y el punto central persisten inmutables.",
                 imgQuery: "assets-proyecto/prompt-6.jpg"
             }
         ];
@@ -3239,7 +3382,7 @@
                 
                 <div class="p-8 space-y-6 overflow-y-auto">
                     <div class="bg-noise-900/50 p-4 border-l-4 border-noise-accent">
-                        <h4 class="text-noise-accent font-bold mb-2 text-sm uppercase tracking-wider">Conclusión</h4>
+                        <h4 class="text-noise-accent font-bold mb-2 text-sm uppercase tracking-wider">ConclusiÃ³n</h4>
                         <p class="text-gray-300 text-sm italic">${data.analysis}</p>
                     </div>
 
